@@ -1,8 +1,14 @@
+package packaging.payrollimplementation;
+
+import packaging.util.DateUtil;
+import packaging.payrolldomain.Paycheck;
+import packaging.payrolldomain.PaymentClassification;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CommissionedClassification extends PaymentClassification {
+public class CommissionedClassification implements PaymentClassification {
     private double salary;
     private double commissionRate;
     private Map<Date, SalesReceipt> salesReceiptMap = new HashMap<>();
@@ -37,16 +43,6 @@ public class CommissionedClassification extends PaymentClassification {
                 totalSales += salesReceipt.getAmount();
             }
         }
-        return salary/2 + totalSales * commissionRate;
+        return salary / 2 + totalSales * commissionRate;
     }
-
-//    private boolean isInPayPeriod(SalesReceipt salesReceipt, Date payPeriod) {
-//        Date payPeriodEndDate = payPeriod;
-//        Calendar cal = Calendar.getInstance();
-//        cal.setTime(payPeriod);
-//        cal.add(Calendar.DAY_OF_MONTH, -14);
-//        Date payPeriodStartDate = Date.from(cal.toInstant());
-//        return salesReceipt.getDate().getTime() <= payPeriodEndDate.getTime()  &&
-//                salesReceipt.getDate().getTime() >= payPeriodStartDate.getTime();
-//    }
 }

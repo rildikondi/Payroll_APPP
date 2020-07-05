@@ -1,3 +1,11 @@
+package packaging.transactionimplementation;
+
+import packaging.abstracttransactions.ChangeAffiliationTransaction;
+import packaging.payrolldatabase.PayrollDatabase;
+import packaging.payrolldomain.Affiliation;
+import packaging.payrolldomain.Employee;
+import packaging.payrollimplementation.UnionAffiliation;
+
 public class ChangeMemberTransaction extends ChangeAffiliationTransaction {
 
     private final int memberId;
@@ -11,7 +19,7 @@ public class ChangeMemberTransaction extends ChangeAffiliationTransaction {
 
     @Override
     protected void recordMembership(Employee e) {
-        PayrollDatabase.addUnionMember(memberId, e);
+        PayrollDatabase.globalPayrollDatabase.addUnionMember(memberId, e);
     }
 
     @Override

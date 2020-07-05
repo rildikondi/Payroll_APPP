@@ -1,3 +1,7 @@
+package packaging.payrollimplementation;
+
+import packaging.payrolldomain.PaymentSchedule;
+
 import java.util.Calendar;
 import java.util.Date;
 

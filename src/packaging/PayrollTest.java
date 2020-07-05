@@ -1,19 +1,39 @@
+package packaging;
+
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import packaging.payrolldatabaseimplementation.PayrollDatabaseImplementation;
+import packaging.payrolldomain.*;
+import packaging.payrollimplementation.*;
+import packaging.transactionapplication.Transaction;
+import packaging.transactionfactory.TransactionFactory;
+import packaging.transactionimplementation.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import static packaging.payrolldatabase.PayrollDatabase.globalPayrollDatabase;
+import static packaging.payrollfactory.PayrollFactory.payrollFactory;
+import static packaging.transactionfactory.TransactionFactory.transactionFactory;
+
 public class PayrollTest {
+
+    @Before
+    public void init() {
+        globalPayrollDatabase = new PayrollDatabaseImplementation();
+        transactionFactory = new TransactionFactoryImplementation();
+        payrollFactory = new PayrollFactoryImplementation();
+    }
 
     @Test
     public void testAddSalariedEmployee() {
         int empId = 1;
-        AddSalariedEmployee t = new AddSalariedEmployee(empId, "Bob", "Home", 1000.00);
+        Transaction t = transactionFactory.makeAddSalariedEmployee(empId, "Bob", "Home", 1000.00);
         t.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertEquals("Bob", e.getName());
         PaymentClassification paymentClassification = e.getPaymentClassification();
         Assert.assertTrue(paymentClassification instanceof SalariedClassification);
@@ -28,9 +48,9 @@ public class PayrollTest {
     @Test
     public void testAddHourlyEmployee() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Sam", "Home", 20.00);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Sam", "Home", 20.00);
         t.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertEquals("Sam", e.getName());
         PaymentClassification paymentClassification = e.getPaymentClassification();
         Assert.assertTrue(paymentClassification instanceof HourlyClassification);
@@ -45,10 +65,10 @@ public class PayrollTest {
     @Test
     public void testAddCommissionedEmployee() {
         int empId = 3;
-        AddCommissionedEmployee transaction = new AddCommissionedEmployee(
+        Transaction t = transactionFactory.makeAddCommissionedEmployee(
                 empId, "John", "Home", 1500.00, 15.00);
-        transaction.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        t.execute();
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertEquals("John", e.getName());
         PaymentClassification paymentClassification = e.getPaymentClassification();
         Assert.assertTrue(paymentClassification instanceof CommissionedClassification);
@@ -64,26 +84,26 @@ public class PayrollTest {
     @Test
     public void deleteEmployee() {
         int empId = 4;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(
+        Transaction t = transactionFactory.makeAddCommissionedEmployee(
                 empId, "Bill", "Home", 2500, 3.2);
         t.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
-        DeleteEmployeeTransaction dt = new DeleteEmployeeTransaction(empId);
+        Transaction dt = transactionFactory.makeDeleteEmployeeTransaction(empId);
         dt.execute();
-        e = PayrollDatabase.getEmployee(empId);
+        e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNull(e);
     }
 
     @Test
     public void testTimeCardTransaction() {
         int empId = 5;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.25);
         t.execute();
         Date date = getDate("2005-7-31");
-        TimeCardTransaction tct = new TimeCardTransaction(date, 8.0, empId);
+        Transaction tct = transactionFactory.makeTimeCardTransaction(date, 8.0, empId);
         tct.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         PaymentClassification pc = e.getPaymentClassification();
         Assert.assertTrue(pc instanceof HourlyClassification);
@@ -96,12 +116,12 @@ public class PayrollTest {
     @Test
     public void testSalesReceiptTransaction() {
         int empId = 6;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(empId, "Bill", "Home", 1500.00, 15.00);
+        Transaction t = transactionFactory.makeAddCommissionedEmployee(empId, "Bill", "Home", 1500.00, 15.00);
         t.execute();
         Date date = getDate("2005-7-31");
-        SalesReceiptTransaction salesReceiptTransaction = new SalesReceiptTransaction(date, 20.00, empId);
+        Transaction salesReceiptTransaction = transactionFactory.makeSalesReceiptTransaction(date, 20.00, empId);
         salesReceiptTransaction.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         PaymentClassification pc = e.getPaymentClassification();
         Assert.assertTrue(pc instanceof CommissionedClassification);
@@ -115,17 +135,17 @@ public class PayrollTest {
     @Test
     public void testAddServiceCharge() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(
+        Transaction t = transactionFactory.makeAddHourlyEmployee(
                 empId, "Bill", "Home", 15.25);
         t.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
-        UnionAffiliation af = new UnionAffiliation();
+        UnionAffiliation af = payrollFactory.makeUnionAffiliation();
         e.setAffiliation(af);
         int memberId = 86; // Maxwell Smart
-        PayrollDatabase.addUnionMember(memberId, e);
+        globalPayrollDatabase.addUnionMember(memberId, e);
         Date date = getDate("2005-8-8");
-        ServiceChargeTransaction sct = new ServiceChargeTransaction(memberId, date, 12.95);
+        Transaction sct = transactionFactory.makeServiceChargeTransaction(memberId, date, 12.95);
         sct.execute();
         ServiceCharge sc = af.getServiceCharge(date);
         Assert.assertNotNull(sc);
@@ -135,11 +155,11 @@ public class PayrollTest {
     @Test
     public void testChangeNameTransaction() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
-        t.execute();
-        ChangeNameTransaction cnt = new ChangeNameTransaction(empId, "Bob");
-        cnt.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Transaction transaction = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.25);
+        transaction.execute();
+        Transaction changeNameTransaction = transactionFactory.makeChangeNameTransaction(empId, "Bob");
+        changeNameTransaction.execute();
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         Assert.assertEquals("Bob", e.getName());
     }
@@ -147,12 +167,12 @@ public class PayrollTest {
     @Test
     public void testChangeHourlyTransaction() {
         int empId = 3;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(
+        Transaction transaction = transactionFactory.makeAddCommissionedEmployee(
                 empId, "Lance", "Home", 2500, 3.2);
-        t.execute();
-        ChangeHourlyTransaction cht = new ChangeHourlyTransaction(empId, 27.52);
-        cht.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        transaction.execute();
+        Transaction changeHourlyTransaction = transactionFactory.makeChangeHourlyTransaction(empId, 27.52);
+        changeHourlyTransaction.execute();
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         PaymentClassification pc = e.getPaymentClassification();
         Assert.assertNotNull(pc);
@@ -166,11 +186,11 @@ public class PayrollTest {
     @Test
     public void testChangeSalariedTransaction() {
         int empId = 7;
-        AddSalariedEmployee t = new AddSalariedEmployee(empId, "Sam", "Home", 1200.00);
+        Transaction t = transactionFactory.makeAddSalariedEmployee(empId, "Sam", "Home", 1200.00);
         t.execute();
-        ChangeSalariedTransaction changeSalariedTransaction = new ChangeSalariedTransaction(empId, 1700.00);
+        Transaction changeSalariedTransaction = transactionFactory.makeChangeSalariedTransaction(empId, 1700.00);
         changeSalariedTransaction.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         PaymentClassification pc = e.getPaymentClassification();
         Assert.assertNotNull(pc);
@@ -184,11 +204,11 @@ public class PayrollTest {
     @Test
     public void testChangeCommissionedTransaction() {
         int empId = 9;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(empId, "John", "Home", 1350.00, 22.50);
+        Transaction t = transactionFactory.makeAddCommissionedEmployee(empId, "John", "Home", 1350.00, 22.50);
         t.execute();
-        ChangeCommissionedTransaction changeCommissionedTransaction = new ChangeCommissionedTransaction(empId, 1400.00, 25.00);
+        Transaction changeCommissionedTransaction = transactionFactory.makeChangeCommissionedTransaction(empId, 1400.00, 25.00);
         changeCommissionedTransaction.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         PaymentClassification pc = e.getPaymentClassification();
         Assert.assertNotNull(pc);
@@ -202,11 +222,11 @@ public class PayrollTest {
     @Test
     public void testChangeDirectMethodTransaction() {
         int empId = 10;
-        AddSalariedEmployee t = new AddSalariedEmployee(empId, "Bob", "Home", 1000.00);
+        Transaction t = transactionFactory.makeAddSalariedEmployee(empId, "Bob", "Home", 1000.00);
         t.execute();
-        ChangeDirectTransaction changeMethodTransaction = new ChangeDirectTransaction(empId, "Raiffeisen", "RZOOATL...");
+        Transaction changeMethodTransaction = transactionFactory.makeChangeDirectTransaction(empId, "Raiffeisen", "RZOOATL...");
         changeMethodTransaction.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         PaymentMethod pm = e.getPaymentMethod();
         Assert.assertNotNull(pm);
@@ -219,11 +239,11 @@ public class PayrollTest {
     @Test
     public void testChangeMailMethodTransaction() {
         int empId = 10;
-        AddSalariedEmployee t = new AddSalariedEmployee(empId, "Bob", "Home", 1000.00);
+        Transaction t = transactionFactory.makeAddSalariedEmployee(empId, "Bob", "Home", 1000.00);
         t.execute();
-        ChangeMailTransaction changeMailTransaction = new ChangeMailTransaction(empId, "Home");
+        Transaction changeMailTransaction = transactionFactory.makeChangeMailTransaction(empId, "Home");
         changeMailTransaction.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         PaymentMethod pm = e.getPaymentMethod();
         Assert.assertNotNull(pm);
@@ -236,11 +256,11 @@ public class PayrollTest {
     @Test
     public void testChangeHoldMethodTransaction() {
         int empId = 10;
-        AddSalariedEmployee t = new AddSalariedEmployee(empId, "Bob", "Home", 1000.00);
+        Transaction t = transactionFactory.makeAddSalariedEmployee(empId, "Bob", "Home", 1000.00);
         t.execute();
-        ChangeHoldTransaction changeHoldTransaction = new ChangeHoldTransaction(empId);
+        Transaction changeHoldTransaction = transactionFactory.makeChangeHoldTransaction(empId);
         changeHoldTransaction.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         PaymentMethod pm = e.getPaymentMethod();
         Assert.assertNotNull(pm);
@@ -250,19 +270,19 @@ public class PayrollTest {
     @Test
     public void testChangeAffiliationTransaction() {
         int empId = 8;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.25);
         t.execute();
         int memberId = 7743;
-        ChangeMemberTransaction cmt = new ChangeMemberTransaction(empId, memberId, 99.42);
+        Transaction cmt = transactionFactory.makeChangeMemberTransaction(empId, memberId, 99.42);
         cmt.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         Affiliation affiliation = e.getAffiliation();
         Assert.assertNotNull(affiliation);
         Assert.assertTrue(affiliation instanceof UnionAffiliation);
         UnionAffiliation uf = (UnionAffiliation) affiliation;
         Assert.assertEquals(99.42, uf.getDues(), .001);
-        Employee member = PayrollDatabase.getUnionMember(memberId);
+        Employee member = globalPayrollDatabase.getUnionMember(memberId);
         Assert.assertNotNull(member);
         Assert.assertEquals(e, member);
     }
@@ -270,11 +290,11 @@ public class PayrollTest {
     @Test
     public void testChangeUnaffiliatedTransaction() {
         int empId = 8;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.25);
         t.execute();
-        ChangeUnaffiliatedTransaction changeUnaffiliatedTransaction = new ChangeUnaffiliatedTransaction(empId);
+        Transaction changeUnaffiliatedTransaction = transactionFactory.makeChangeUnaffiliatedTransaction(empId);
         changeUnaffiliatedTransaction.execute();
-        Employee e = PayrollDatabase.getEmployee(empId);
+        Employee e = globalPayrollDatabase.getEmployee(empId);
         Assert.assertNotNull(e);
         Affiliation affiliation = e.getAffiliation();
         Assert.assertNotNull(affiliation);
@@ -284,10 +304,10 @@ public class PayrollTest {
     @Test
     public void testPaySingleSalariedEmployee() {
         int empId = 1;
-        AddSalariedEmployee t = new AddSalariedEmployee(empId, "Bob", "Home", 1000.00);
+        Transaction t = transactionFactory.makeAddSalariedEmployee(empId, "Bob", "Home", 1000.00);
         t.execute();
         Date payDate = getDate("2001-11-30");
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         Paycheck pc = pt.getPaycheck(empId);
         Assert.assertNotNull(pc);
@@ -301,11 +321,11 @@ public class PayrollTest {
     @Test
     public void testPaySingleSalariedEmployeeOnWrongDate() {
         int empId = 1;
-        AddSalariedEmployee t = new AddSalariedEmployee(
+        Transaction t = transactionFactory.makeAddSalariedEmployee(
                 empId, "Bob", "Home", 1000.00);
         t.execute();
         Date payDate = getDate("2001-11-29");
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         Paycheck pc = pt.getPaycheck(empId);
         Assert.assertNull(pc);
@@ -314,11 +334,11 @@ public class PayrollTest {
     @Test
     public void testPayingSingleHourlyEmployeeNoTimeCards() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(
+        Transaction t = transactionFactory.makeAddHourlyEmployee(
                 empId, "Bill", "Home", 15.25);
         t.execute();
         Date payDate = getDate("2001-11-9");
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         validatePaycheck(pt, empId, payDate, 0.0);
     }
@@ -347,13 +367,13 @@ public class PayrollTest {
     @Test
     public void testPaySingleHourlyEmployeeOneTimeCard() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(
+        Transaction t = transactionFactory.makeAddHourlyEmployee(
                 empId, "Bill", "Home", 15.25);
         t.execute();
         Date payDate = getDate("2001-11-9"); // Friday
-        TimeCardTransaction tc = new TimeCardTransaction(payDate, 2.0, empId);
+        Transaction tc = transactionFactory.makeTimeCardTransaction(payDate, 2.0, empId);
         tc.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         validatePaycheck(pt, empId, payDate, 30.5);
     }
@@ -361,27 +381,26 @@ public class PayrollTest {
     @Test
     public void testPaySingleHourlyEmployeeOvertimeOneTimeCard() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(
+        Transaction t = transactionFactory.makeAddHourlyEmployee(
                 empId, "Bill", "Home", 15.25);
         t.execute();
         Date payDate = getDate("2001-11-9"); // Friday
-        TimeCardTransaction tc = new TimeCardTransaction(payDate, 9.0, empId);
+        Transaction tc = transactionFactory.makeTimeCardTransaction(payDate, 9.0, empId);
         tc.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
-        validatePaycheck(pt, empId, payDate,
-                (8 + 1.5) * 15.25);
+        validatePaycheck(pt, empId, payDate, (8 + 1.5) * 15.25);
     }
 
     @Test
     public void testPaySingleHourlyEmployeeOnWrongDate() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.25);
         t.execute();
         Date payDate = getDate("2001-11-8"); // Thursday
-        TimeCardTransaction tc = new TimeCardTransaction(payDate, 9.0, empId);
+        Transaction tc = transactionFactory.makeTimeCardTransaction(payDate, 9.0, empId);
         tc.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         Paycheck pc = pt.getPaycheck(empId);
         Assert.assertNull(pc);
@@ -390,17 +409,17 @@ public class PayrollTest {
     @Test
     public void testPaySingleHourlyEmployeeTwoTimeCards() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.25);
         t.execute();
         Date payDate = getDate("2001-11-9"); // Friday
-        TimeCardTransaction tc = new TimeCardTransaction(payDate, 2.0, empId);
+        Transaction tc = transactionFactory.makeTimeCardTransaction(payDate, 2.0, empId);
         tc.execute();
         Calendar cal = Calendar.getInstance();
         cal.setTime(payDate);
         cal.add(Calendar.DAY_OF_MONTH, -1);
-        TimeCardTransaction tc2 = new TimeCardTransaction(Date.from(cal.toInstant()), 5.0, empId);
+        Transaction tc2 = transactionFactory.makeTimeCardTransaction(Date.from(cal.toInstant()), 5.0, empId);
         tc2.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         validatePaycheck(pt, empId, payDate, 7 * 15.25);
     }
@@ -408,15 +427,15 @@ public class PayrollTest {
     @Test
     public void testPaySingleHourlyEmployeeWithTimeCardsSpanningTwoPayPeriods() {
         int empId = 2;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.25);
         t.execute();
         Date payDate = getDate("2001-11-9"); // Friday
         Date dateInPreviousPayPeriod = getDate("2001-11-2");
-        TimeCardTransaction tc = new TimeCardTransaction(payDate, 2.0, empId);
+        Transaction tc = transactionFactory.makeTimeCardTransaction(payDate, 2.0, empId);
         tc.execute();
-        TimeCardTransaction tc2 = new TimeCardTransaction(dateInPreviousPayPeriod, 5.0, empId);
+        Transaction tc2 = transactionFactory.makeTimeCardTransaction(dateInPreviousPayPeriod, 5.0, empId);
         tc2.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         validatePaycheck(pt, empId, payDate, 2 * 15.25);
     }
@@ -424,11 +443,11 @@ public class PayrollTest {
     @Test
     public void testCommissionedEmployeeNoSales() {
         int empId = 2;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(
+        Transaction t = transactionFactory.makeAddCommissionedEmployee(
                 empId, "Bill", "Home", 1400.00, 0.07);
         t.execute();
         Date payDate = getDate("2020-06-26");
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         Paycheck pc = pt.getPaycheck(empId);
         Assert.assertNotNull(pc);
@@ -442,11 +461,11 @@ public class PayrollTest {
     @Test
     public void testPayCommissionedEmployeeWrongDate() {
         int empId = 2;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(
+        Transaction t = transactionFactory.makeAddCommissionedEmployee(
                 empId, "Bill", "Home", 1400.00, 0.07);
         t.execute();
         Date payDate = getDate("2020-06-25");
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         Paycheck pc = pt.getPaycheck(empId);
         Assert.assertNull(pc);
@@ -455,13 +474,13 @@ public class PayrollTest {
     @Test
     public void testPayCommissionedEmployeeOneSale() {
         int empId = 2;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(
+        Transaction t = new AddCommissionedEmployee(
                 empId, "Bill", "Home", 1400.00, 0.07);
         t.execute();
         Date payDate = getDate("2020-06-12"); // second Friday
-        SalesReceiptTransaction salesReceiptTransaction = new SalesReceiptTransaction(payDate, 100.00, empId);
+        Transaction salesReceiptTransaction = transactionFactory.makeSalesReceiptTransaction(payDate, 100.00, empId);
         salesReceiptTransaction.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         validatePaycheck(pt, empId, payDate, 707.00);
     }
@@ -470,16 +489,16 @@ public class PayrollTest {
     @Test
     public void testPayCommissionedEmployeeTwoSales() {
         int empId = 2;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(
+        Transaction t = transactionFactory.makeAddCommissionedEmployee(
                 empId, "Bill", "Home", 1400.00, 0.07);
         t.execute();
         Date payDate = getDate("2020-06-12"); // second Friday
-        SalesReceiptTransaction salesReceiptTransaction = new SalesReceiptTransaction(payDate, 100.00, empId);
+        Transaction salesReceiptTransaction = transactionFactory.makeSalesReceiptTransaction(payDate, 100.00, empId);
         salesReceiptTransaction.execute();
         Date saleDate = getDate("2020-06-11");
-        SalesReceiptTransaction salesReceiptTransaction2 = new SalesReceiptTransaction(saleDate, 200.00, empId);
+        Transaction salesReceiptTransaction2 = transactionFactory.makeSalesReceiptTransaction(saleDate, 200.00, empId);
         salesReceiptTransaction2.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         validatePaycheck(pt, empId, payDate, 721.00);
     }
@@ -487,16 +506,16 @@ public class PayrollTest {
     @Test
     public void testPayCommissionedEmployeeWithSalesSpanningTwoPayPeriods() {
         int empId = 2;
-        AddCommissionedEmployee t = new AddCommissionedEmployee(
+        Transaction t = transactionFactory.makeAddCommissionedEmployee(
                 empId, "Bill", "Home", 1400.00, 0.07);
         t.execute();
         Date payDate = getDate("2020-06-12"); // second Friday
-        SalesReceiptTransaction salesReceiptTransaction = new SalesReceiptTransaction(payDate, 100.00, empId);
+        Transaction salesReceiptTransaction = transactionFactory.makeSalesReceiptTransaction(payDate, 100.00, empId);
         salesReceiptTransaction.execute();
         Date saleDate = getDate("2020-06-13");// payed in fourth friday
-        SalesReceiptTransaction salesReceiptTransaction2 = new SalesReceiptTransaction(saleDate, 200.00, empId);
+        Transaction salesReceiptTransaction2 = transactionFactory.makeSalesReceiptTransaction(saleDate, 200.00, empId);
         salesReceiptTransaction2.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         validatePaycheck(pt, empId, payDate, 707.00);
     }
@@ -504,13 +523,13 @@ public class PayrollTest {
     @Test
     public void testSalariedUnionMemberDues() {
         int empId = 1;
-        AddSalariedEmployee t = new AddSalariedEmployee(empId, "Bob", "Home", 1000.00);
+        Transaction t = transactionFactory.makeAddSalariedEmployee(empId, "Bob", "Home", 1000.00);
         t.execute();
         int memberId = 7734;
-        ChangeMemberTransaction cmt = new ChangeMemberTransaction(empId, memberId, 9.42);
+        Transaction cmt = transactionFactory.makeChangeMemberTransaction(empId, memberId, 9.42);
         cmt.execute();
         Date payDate = getDate("2001-11-30");
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         Paycheck pc = pt.getPaycheck(empId);
         Assert.assertNotNull(pc);
@@ -524,17 +543,17 @@ public class PayrollTest {
     @Test
     public void testHourlyUnionMemberServiceCharge() {
         int empId = 1;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.24);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.24);
         t.execute();
         int memberId = 7734;
-        ChangeMemberTransaction cmt = new ChangeMemberTransaction(empId, memberId, 9.42);
+        Transaction cmt = transactionFactory.makeChangeMemberTransaction(empId, memberId, 9.42);
         cmt.execute();
         Date payDate = getDate("2001-11-9");
-        ServiceChargeTransaction sct = new ServiceChargeTransaction(memberId, payDate, 19.42);
+        Transaction sct = transactionFactory.makeServiceChargeTransaction(memberId, payDate, 19.42);
         sct.execute();
-        TimeCardTransaction tct = new TimeCardTransaction(payDate, 8.0, empId);
+        Transaction tct = transactionFactory.makeTimeCardTransaction(payDate, 8.0, empId);
         tct.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         Paycheck pc = pt.getPaycheck(empId);
         Assert.assertNotNull(pc);
@@ -548,23 +567,23 @@ public class PayrollTest {
     @Test
     public void testServiceChargesSpanningMultiplePayPeriods() {
         int empId = 1;
-        AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.24);
+        Transaction t = transactionFactory.makeAddHourlyEmployee(empId, "Bill", "Home", 15.24);
         t.execute();
         int memberId = 7734;
-        ChangeMemberTransaction cmt = new ChangeMemberTransaction(empId, memberId, 9.42);
+        Transaction cmt = transactionFactory.makeChangeMemberTransaction(empId, memberId, 9.42);
         cmt.execute();
         Date payDate = getDate("2001-11-9");
         Date earlyDate = getDate("2001-11-2"); // previous Friday
         Date lateDate = getDate("2001-11-16"); // next Friday
-        ServiceChargeTransaction sct = new ServiceChargeTransaction(memberId, payDate, 19.42);
+        Transaction sct = transactionFactory.makeServiceChargeTransaction(memberId, payDate, 19.42);
         sct.execute();
-        ServiceChargeTransaction sctEarly = new ServiceChargeTransaction(memberId, earlyDate, 100.00);
+        Transaction sctEarly = transactionFactory.makeServiceChargeTransaction(memberId, earlyDate, 100.00);
         sctEarly.execute();
-        ServiceChargeTransaction sctLate = new ServiceChargeTransaction(memberId, lateDate, 200.00);
-        sctLate.execute();
-        TimeCardTransaction tct = new TimeCardTransaction(payDate, 8.0, empId);
-        tct.execute();
-        PaydayTransaction pt = new PaydayTransaction(payDate);
+        Transaction serviceChargeTransaction = transactionFactory.makeServiceChargeTransaction(memberId, lateDate, 200.00);
+        serviceChargeTransaction.execute();
+        Transaction timeCardTransaction = transactionFactory.makeTimeCardTransaction(payDate, 8.0, empId);
+        timeCardTransaction.execute();
+        PaydayTransaction pt = (PaydayTransaction) transactionFactory.makePaydayTransaction(payDate);
         pt.execute();
         Paycheck pc = pt.getPaycheck(empId);
         Assert.assertNotNull(pc);
