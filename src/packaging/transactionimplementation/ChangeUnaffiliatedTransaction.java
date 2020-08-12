@@ -8,8 +8,8 @@ import packaging.payrollimplementation.UnionAffiliation;
 
 public class ChangeUnaffiliatedTransaction extends ChangeAffiliationTransaction {
 
-    public ChangeUnaffiliatedTransaction(int empId) {
-        super(empId);
+    public ChangeUnaffiliatedTransaction(int empId, PayrollDatabase payrollDatabase) {
+        super(empId, payrollDatabase);
     }
 
     @Override
@@ -18,7 +18,7 @@ public class ChangeUnaffiliatedTransaction extends ChangeAffiliationTransaction 
         if (affiliation instanceof UnionAffiliation) {
             UnionAffiliation unionAffiliation = (UnionAffiliation) affiliation;
             int memberId = unionAffiliation.getMemberId();
-            PayrollDatabase.globalPayrollDatabase.removeUnionMember(memberId);
+            payrollDatabase.removeUnionMember(memberId);
         }
     }
 

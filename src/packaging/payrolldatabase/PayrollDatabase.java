@@ -4,21 +4,21 @@ import packaging.payrolldomain.Employee;
 
 import java.util.List;
 
-public abstract class PayrollDatabase {
+public interface PayrollDatabase {
 
-    public static PayrollDatabase globalPayrollDatabase;
+    void addEmployee(Employee employee);
 
-    public abstract void addEmployee(int id, Employee employee);
+    Employee getEmployee(int id);
 
-    public abstract Employee getEmployee(int id);
+    void deleteEmployee(int empId);
 
-    public abstract void deleteEmployee(int empId);
+    void addUnionMember(int memberId, Employee e);
 
-    public abstract void addUnionMember(int memberId, Employee e);
+    Employee getUnionMember(int memberId);
 
-    public abstract Employee getUnionMember(int memberId);
+    void removeUnionMember(int memberId);
 
-    public abstract void removeUnionMember(int memberId);
+    List<Integer> getAllEmployeeIds();
 
-    public abstract List<Integer> getAllEmployeeIds();
+    Employee[] getAllEmployees();
 }

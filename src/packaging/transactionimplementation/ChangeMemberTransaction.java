@@ -11,15 +11,15 @@ public class ChangeMemberTransaction extends ChangeAffiliationTransaction {
     private final int memberId;
     private final double dues;
 
-    public ChangeMemberTransaction(int empId, int memberId, double dues) {
-        super(empId);
+    public ChangeMemberTransaction(int empId, int memberId, double dues, PayrollDatabase payrollDatabase) {
+        super(empId, payrollDatabase);
         this.memberId = memberId;
         this.dues = dues;
     }
 
     @Override
     protected void recordMembership(Employee e) {
-        PayrollDatabase.globalPayrollDatabase.addUnionMember(memberId, e);
+        payrollDatabase.addUnionMember(memberId, e);
     }
 
     @Override

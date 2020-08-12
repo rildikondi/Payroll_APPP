@@ -17,8 +17,16 @@ public class Employee {
         this.address = address;
     }
 
+    public int getEmployerId() {
+        return employerId;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public String getAddress() {
+        return address;
     }
 
     public void setName(String name) {

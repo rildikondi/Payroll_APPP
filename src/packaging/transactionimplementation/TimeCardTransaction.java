@@ -10,13 +10,14 @@ import java.util.Date;
 
 import static packaging.payrollfactory.PayrollFactory.payrollFactory;
 
-public class TimeCardTransaction implements Transaction {
+public class TimeCardTransaction extends Transaction {
 
     private final Date date;
     private final double hours;
     private final int empId;
 
-    public TimeCardTransaction(Date date, double hours, int empId) {
+    public TimeCardTransaction(Date date, double hours, int empId, PayrollDatabase payrollDatabase) {
+        super(payrollDatabase);
         this.date = date;
         this.hours = hours;
         this.empId = empId;
@@ -24,7 +25,7 @@ public class TimeCardTransaction implements Transaction {
 
     @Override
     public void execute() {
-        Employee e = PayrollDatabase.globalPayrollDatabase.getEmployee(empId);
+        Employee e = payrollDatabase.getEmployee(empId);
         if (e != null) {
             HourlyClassification hc = (HourlyClassification) e.getPaymentClassification();
             if (hc != null)

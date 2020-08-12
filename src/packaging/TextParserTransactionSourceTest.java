@@ -2,6 +2,8 @@ package packaging;
 
 import org.junit.Assert;
 import org.junit.Test;
+import packaging.payrolldatabase.PayrollDatabase;
+import packaging.payrolldatabaseimplementation.InMemoryPayrollDatabase;
 import packaging.textparsertrasactionsource.TextParserTransactionSource;
 import packaging.transactionapplication.Transaction;
 import packaging.transactionfactory.TransactionFactory;
@@ -12,8 +14,8 @@ import java.util.Date;
 
 public class TextParserTransactionSourceTest {
 
-    private final Transaction addHourlyTransaction = new TestTransaction();
-    private final Transaction addCommissionedTransaction = new TestTransaction();
+    private final Transaction addHourlyTransaction = new TestTransaction(new InMemoryPayrollDatabase());
+    private final Transaction addCommissionedTransaction = new TestTransaction(new InMemoryPayrollDatabase());
 
     private TextParserTransactionSource source;
 
@@ -44,7 +46,11 @@ public class TextParserTransactionSourceTest {
 
 
 
-    private class TestTransaction implements Transaction {
+    private class TestTransaction extends Transaction {
+
+        public TestTransaction(PayrollDatabase payrollDatabase) {
+            super(payrollDatabase);
+        }
 
         @Override
         public void execute() {

@@ -1,12 +1,13 @@
 package packaging.abstracttransactions;
 
+import packaging.payrolldatabase.PayrollDatabase;
 import packaging.payrolldomain.Affiliation;
 import packaging.payrolldomain.Employee;
 
 public abstract class ChangeAffiliationTransaction extends ChangeEmployeeTransaction {
     
-    public ChangeAffiliationTransaction(int empId) {
-        super(empId);
+    public ChangeAffiliationTransaction(int empId, PayrollDatabase database) {
+        super(empId, database);
     }
 
     @Override

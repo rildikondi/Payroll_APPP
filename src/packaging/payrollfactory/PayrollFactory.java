@@ -12,7 +12,7 @@ public abstract class PayrollFactory {
 
     public abstract CommissionedClassification makeCommissionedClassification(double salary, double commissionRate);
 
-    public abstract DirectMethod makeDirectMethod(String bank, String account);
+    public abstract DirectDepositMethod makeDirectMethod(String bank, String account);
 
     public abstract HoldMethod makeHoldMethod();
 

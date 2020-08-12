@@ -3,16 +3,17 @@ package packaging.transactionimplementation;
 import packaging.payrolldatabase.PayrollDatabase;
 import packaging.transactionapplication.Transaction;
 
-public class DeleteEmployeeTransaction implements Transaction {
+public class DeleteEmployeeTransaction extends Transaction {
 
     private final int empId;
 
-    public DeleteEmployeeTransaction(int empId) {
+    public DeleteEmployeeTransaction(int empId, PayrollDatabase payrollDatabase) {
+        super(payrollDatabase);
         this.empId = empId;
     }
 
     @Override
     public void execute() {
-        PayrollDatabase.globalPayrollDatabase.deleteEmployee(empId);
+        payrollDatabase.deleteEmployee(empId);
     }
 }

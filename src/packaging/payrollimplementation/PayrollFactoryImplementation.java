@@ -16,8 +16,8 @@ public class PayrollFactoryImplementation extends PayrollFactory {
     }
 
     @Override
-    public DirectMethod makeDirectMethod(String bank, String account) {
-        return new DirectMethod(bank, account);
+    public DirectDepositMethod makeDirectMethod(String bank, String account) {
+        return new DirectDepositMethod(bank, account);
     }
 
     @Override

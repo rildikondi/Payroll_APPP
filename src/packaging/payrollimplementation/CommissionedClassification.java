@@ -11,12 +11,17 @@ import java.util.Map;
 public class CommissionedClassification implements PaymentClassification {
     private double salary;
     private double commissionRate;
+
     private Map<Date, SalesReceipt> salesReceiptMap = new HashMap<>();
 
     public CommissionedClassification(double salary, double commissionRate) {
         super();
         this.salary = salary;
         this.commissionRate = commissionRate;
+    }
+
+    public void setSalesReceiptMap(Map<Date, SalesReceipt> salesReceiptMap) {
+        this.salesReceiptMap = salesReceiptMap;
     }
 
     public double getSalary() {
@@ -33,6 +38,10 @@ public class CommissionedClassification implements PaymentClassification {
 
     public SalesReceipt getSalesReceipt(Date date) {
         return salesReceiptMap.get(date);
+    }
+
+    public Map<Date, SalesReceipt> getSalesReceiptMap() {
+        return salesReceiptMap;
     }
 
     @Override

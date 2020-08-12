@@ -3,12 +3,11 @@ package packaging.payrollimplementation;
 import packaging.payrolldomain.Paycheck;
 import packaging.payrolldomain.PaymentMethod;
 
-public class DirectMethod implements PaymentMethod {
-
+public class DirectDepositMethod implements PaymentMethod {
     private final String bank;
     private final String account;
 
-    public DirectMethod(String bank, String account) {
+    public DirectDepositMethod(String bank, String account) {
         this.bank = bank;
         this.account = account;
     }

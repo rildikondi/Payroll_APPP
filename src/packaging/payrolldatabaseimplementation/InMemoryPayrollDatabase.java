@@ -3,17 +3,18 @@ package packaging.payrolldatabaseimplementation;
 import packaging.payrolldomain.Employee;
 import packaging.payrolldatabase.PayrollDatabase;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-public class PayrollDatabaseImplementation extends PayrollDatabase {
-    private  Hashtable<Integer, Employee> employees = new Hashtable<>();
-    private  Hashtable<Integer, Employee> unionMembers = new Hashtable<>();
+public class InMemoryPayrollDatabase implements PayrollDatabase {
+    private Hashtable<Integer, Employee> employees = new Hashtable<>();
+    private Hashtable<Integer, Employee> unionMembers = new Hashtable<>();
 
     @Override
-    public  void addEmployee(int id, Employee employee) {
-        employees.put(id, employee);
+    public void addEmployee(Employee employee) {
+        employees.put(employee.getEmployerId(), employee);
     }
 
     @Override
@@ -44,5 +45,10 @@ public class PayrollDatabaseImplementation extends PayrollDatabase {
     @Override
     public List<Integer> getAllEmployeeIds() {
         return new ArrayList<>(employees.keySet());
+    }
+
+    @Override
+    public Employee[] getAllEmployees() {
+        return employees.values().toArray(new Employee[employees.values().size()]);
     }
 }

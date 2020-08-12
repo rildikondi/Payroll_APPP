@@ -10,12 +10,13 @@ import java.util.Date;
 
 import static packaging.payrollfactory.PayrollFactory.payrollFactory;
 
-public class ServiceChargeTransaction implements Transaction {
+public class ServiceChargeTransaction extends Transaction {
     private final int memberId;
     private final Date date;
     private final double charge;
 
-    public ServiceChargeTransaction(int memberId, Date date, double charge) {
+    public ServiceChargeTransaction(int memberId, Date date, double charge, PayrollDatabase payrollDatabase) {
+        super(payrollDatabase);
         this.memberId = memberId;
         this.date = date;
         this.charge = charge;
@@ -23,7 +24,7 @@ public class ServiceChargeTransaction implements Transaction {
 
     @Override
     public void execute() {
-        Employee e =  PayrollDatabase.globalPayrollDatabase.getUnionMember(memberId);
+        Employee e =  payrollDatabase.getUnionMember(memberId);
         if (e != null) {
             if (e.getAffiliation() instanceof UnionAffiliation)
                 e.getAffiliation().addServiceCharge(payrollFactory.makeServiceCharge(date, charge));

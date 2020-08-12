@@ -1,6 +1,7 @@
 package packaging.transactionimplementation;
 
 import packaging.abstracttransactions.ChangeClassificationTransaction;
+import packaging.payrolldatabase.PayrollDatabase;
 import packaging.payrolldomain.PaymentClassification;
 import packaging.payrolldomain.PaymentSchedule;
 
@@ -10,8 +11,8 @@ public class ChangeCommissionedTransaction extends ChangeClassificationTransacti
     private final double salary;
     private final double commissionRate;
 
-    public ChangeCommissionedTransaction(int empId, double salary, double commissionRate) {
-        super(empId);
+    public ChangeCommissionedTransaction(int empId, double salary, double commissionRate, PayrollDatabase payrollDatabase) {
+        super(empId, payrollDatabase);
         this.salary = salary;
         this.commissionRate = commissionRate;
     }

@@ -1,13 +1,14 @@
 package packaging.abstracttransactions;
 
+import packaging.payrolldatabase.PayrollDatabase;
 import packaging.payrolldomain.Employee;
 import packaging.payrolldomain.PaymentClassification;
 import packaging.payrolldomain.PaymentSchedule;
 
 public abstract class ChangeClassificationTransaction extends ChangeEmployeeTransaction {
 
-    public ChangeClassificationTransaction(int id) {
-        super(id);
+    public ChangeClassificationTransaction(int id, PayrollDatabase payrollDatabase) {
+        super(id, payrollDatabase);
     }
 
     @Override

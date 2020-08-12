@@ -8,12 +8,13 @@ import packaging.payrolldomain.PaymentSchedule;
 import packaging.payrollimplementation.HoldMethod;
 import packaging.transactionapplication.Transaction;
 
-public abstract class AddEmployeeTransaction implements Transaction {
+public abstract class AddEmployeeTransaction extends Transaction {
     private final int employerId;
     private final String name;
     private final String address;
 
-    public AddEmployeeTransaction(int employerId, String name, String address) {
+    public AddEmployeeTransaction(int employerId, String name, String address, PayrollDatabase payrollDatabase) {
+        super(payrollDatabase);
         this.employerId = employerId;
         this.name = name;
         this.address = address;
@@ -32,6 +33,6 @@ public abstract class AddEmployeeTransaction implements Transaction {
         e.setClassification(paymentClassification);
         e.setSchedule(paymentSchedule);
         e.setMethod(paymentMethod);
-        PayrollDatabase.globalPayrollDatabase.addEmployee(employerId, e);
+        payrollDatabase.addEmployee(e);
     }
 }

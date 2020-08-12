@@ -1,22 +1,22 @@
 package packaging.abstracttransactions;
 
+import packaging.payrolldatabase.PayrollDatabase;
 import packaging.payrolldomain.Employee;
 import packaging.transactionapplication.Transaction;
-import packaging.payrolldatabase.PayrollDatabase;
 
 import java.awt.dnd.InvalidDnDOperationException;
 
-public abstract class ChangeEmployeeTransaction implements Transaction {
+public abstract class ChangeEmployeeTransaction extends Transaction {
     private final int empId;
 
-    public ChangeEmployeeTransaction(int empId) {
+    public ChangeEmployeeTransaction(int empId, PayrollDatabase payrollDatabase) {
+        super(payrollDatabase);
         this.empId = empId;
     }
 
-
     @Override
     public void execute() {
-        Employee e =  PayrollDatabase.globalPayrollDatabase.getEmployee(empId);
+        Employee e =  payrollDatabase.getEmployee(empId);
         if (e != null)
             change(e);
         else

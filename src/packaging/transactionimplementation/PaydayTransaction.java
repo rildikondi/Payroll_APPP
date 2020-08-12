@@ -10,19 +10,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PaydayTransaction  implements Transaction {
+public class PaydayTransaction  extends Transaction {
     private Date payDate;
     private Map<Integer, Paycheck> paychecks = new HashMap<>();
 
-    public PaydayTransaction(Date payDate) {
+    public PaydayTransaction(Date payDate, PayrollDatabase payrollDatabase) {
+        super(payrollDatabase);
         this.payDate = payDate;
     }
 
     @Override
     public void execute() {
-        List<Integer> employeeIds =  PayrollDatabase.globalPayrollDatabase.getAllEmployeeIds();
+        List<Integer> employeeIds =  payrollDatabase.getAllEmployeeIds();
         for (int empId : employeeIds) {
-            Employee employee =  PayrollDatabase.globalPayrollDatabase.getEmployee(empId);
+            Employee employee =  payrollDatabase.getEmployee(empId);
             if (employee.isPayDate(payDate)) {
                 Date startDate = employee.getPayPeriodStartDate(payDate);
                 Paycheck pc = new Paycheck(startDate, payDate);

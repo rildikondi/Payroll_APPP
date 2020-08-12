@@ -17,6 +17,14 @@ public class HourlyClassification implements PaymentClassification {
         this.hourlyRate = hourlyRate;
     }
 
+    public Map<Date, TimeCard> getTimeCardList() {
+        return timeCardList;
+    }
+
+    public void setTimeCardList(Map<Date, TimeCard> timeCardList) {
+        this.timeCardList = timeCardList;
+    }
+
     public double getHourlyRate() {
         return hourlyRate;
     }
@@ -45,14 +53,4 @@ public class HourlyClassification implements PaymentClassification {
         double normalHours = timeCard.getHours() - overtimeHours;
         return hourlyRate * (normalHours + 1.5 * overtimeHours);
     }
-
-//    private boolean isInPayPeriod(nopackaging.TimeCard card, Date payPeriod) {
-//        Date payPeriodEndDate = payPeriod;
-//        Calendar cal = Calendar.getInstance();
-//        cal.setTime(payPeriod);
-//        cal.add(Calendar.DAY_OF_MONTH, -5);
-//        Date payPeriodStartDate = Date.from(cal.toInstant());
-//        return card.getDate().getTime() <= payPeriodEndDate.getTime()  &&
-//                card.getDate().getTime() >= payPeriodStartDate.getTime();
-//    }
 }
